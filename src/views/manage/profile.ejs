@@ -1,0 +1,28 @@
+<%- include('../layout', { title: 'Profile' }) %>
+<div class="content px-4">
+  <h1>Profile</h1>
+  <div class="row">
+    <%- include('./sidebar', { active: 'profile' }) %>
+    <div class="col-md-9">
+      <form method="post" action="/Account/Manage">
+        <input type="hidden" name="action" value="profile" />
+        <div class="form-floating mb-3">
+          <input type="text" placeholder="Username" name="username" id="username" class="form-control" value="<%= user.email %>" readonly />
+          <label for="username" class="form-label">Username (email)</label>
+        </div>
+        <div class="form-floating mb-3">
+          <input type="text" placeholder="Phone number" name="phone" id="phone" class="form-control" value="<%= user.phone || '' %>" />
+          <label for="phone" class="form-label">Phone number</label>
+        </div>
+        <button type="submit" class="w-100 btn btn-lg btn-primary">Save</button>
+      </form>
+      <ul class='list-group mt-4'>
+        <li class='list-group-item bg-transparent'><b>Registered:</b> <%= user.registeredAt.toLocaleString() %></li>
+        <li class='list-group-item bg-transparent'><b>Last login:</b> <%= user.lastLogin ? user.lastLogin.toLocaleString() : 'Never' %></li>
+        <li class='list-group-item bg-transparent'><b>Status:</b> <%= user.isActive ? 'Active' : 'Inactive' %></li>
+        <li class='list-group-item bg-transparent'><b>Role:</b> <%= user.role %></li>
+        <li class='list-group-item bg-transparent'><b>2FA:</b> <%= user.twoFA_enabled ? 'Enabled' : 'Disabled' %></li>
+      </ul>
+    </div>
+  </div>
+</div> 

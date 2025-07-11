@@ -1,0 +1,27 @@
+<%- include('../layout', { title: 'Invitations' }) %>
+<div class="mt-5 mx-auto" style="max-width:700px;">
+  <h2 class="mb-4 text-center">Invitations</h2>
+  <form method='POST' action='/AdminPanel/Invites' class='mb-4 text-center'>
+    <button type='submit' class='btn btn-dark'>Generate New Invite Token</button>
+  </form>
+  <hr>
+  <table class='table table-bordered table-sm align-middle'>
+    <thead class="table-light"><tr><th>Token</th><th>Created</th><th>Used</th><th>Send by Email</th></tr></thead>
+    <tbody>
+      <% invites.forEach(invite => { %>
+        <tr>
+          <td><%= invite.token %></td>
+          <td><%= new Date(invite.createdAt).toLocaleString() %></td>
+          <td><%= invite.used ? 'Yes' : 'No' %></td>
+          <td>
+            <form method='POST' action='/AdminPanel/Invites/send' class='d-flex'>
+              <input type='hidden' name='token' value='<%= invite.token %>'>
+              <input type='email' name='email' class='form-control me-2' placeholder='Recipient email' required>
+              <button type='submit' class='btn btn-outline-dark btn-sm'>Send</button>
+            </form>
+          </td>
+        </tr>
+      <% }) %>
+    </tbody>
+  </table>
+</div> 

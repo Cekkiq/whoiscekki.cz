@@ -1,0 +1,17 @@
+<%- include('../layout', { title: 'Personal data' }) %>
+<div class="content px-4">
+  <h1>Personal data</h1>
+  <div class="row">
+    <%- include('./sidebar', { active: 'data' }) %>
+    <div class="col-md-9">
+      <form method='POST' action='/Account/Manage' class='mb-3'>
+        <input type='hidden' name='action' value='exportData'>
+        <button type='submit' class='btn btn-info w-100'>Export My Data (JSON)</button>
+      </form>
+      <form method='POST' action='/Account/Manage' onsubmit="return confirm('Are you sure you want to delete your account? This cannot be undone.');">
+        <input type='hidden' name='action' value='deleteAccount'>
+        <button type='submit' class='btn btn-danger w-100'>Delete My Account</button>
+      </form>
+    </div>
+  </div>
+</div> 

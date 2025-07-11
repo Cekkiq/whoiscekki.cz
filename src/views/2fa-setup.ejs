@@ -1,0 +1,27 @@
+<%- include('layout', { title: '2FA Setup' }) %>
+<div class="row justify-content-center">
+  <div class="col-md-6">
+    <div class="card mt-5">
+      <h2 class="mb-4 text-center"><i class="bi bi-shield-lock"></i> 2FA Setup</h2>
+      <% if (typeof error !== 'undefined' && error) { %>
+        <div class="error-handler"><i class="bi bi-exclamation-triangle-fill"></i> <%= error %></div>
+      <% } %>
+      <p class="text-center">Scan this QR code or use the secret in your Authenticator app:</p>
+      <div class="text-center mb-3">
+        <img src='https://api.qrserver.com/v1/create-qr-code/?data=<%= encodeURIComponent(otpauth_url) %>&size=200x200' alt='QR Code' class="mb-2 rounded shadow-sm">
+      </div>
+      <div class="text-center mb-3">
+        <span class="badge bg-secondary p-2">Secret: <%= secret %></span>
+      </div>
+      <pre class="bg-dark text-light p-2">otpauth_url: <%= otpauth_url %></pre>
+      <pre class="bg-dark text-light p-2">secret: <%= secret %></pre>
+      <form method='POST' action='/Account/2fa/verify'>
+        <div class='mb-3'>
+          <label for='code' class='form-label'><i class="bi bi-shield-check"></i> Enter code from app</label>
+          <input type='text' class='form-control' id='code' name='code' required autofocus>
+        </div>
+        <button type='submit' class='btn btn-primary minimal-btn w-100'><i class="bi bi-shield-lock"></i> Verify & Enable 2FA</button>
+      </form>
+    </div>
+  </div>
+</div> 

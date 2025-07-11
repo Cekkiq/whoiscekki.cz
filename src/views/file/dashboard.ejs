@@ -1,0 +1,91 @@
+<%- include('../layout', { title: 'My Cloud' }) %>
+<div class="mt-5" style="max-width: 600px; margin: 0 auto; padding: 1.2em 0.5em;">
+  <h2 class="mb-4 text-center"><i class="bi bi-cloud-arrow-up"></i> My Cloud</h2>
+  <% if (typeof error !== 'undefined' && error) { %>
+    <div class="error-handler"><i class="bi bi-exclamation-triangle-fill"></i> <%= error %></div>
+  <% } %>
+  <form id="uploadForm" method='POST' action='/FileAccess/upload' enctype='multipart/form-data' class='mb-4 d-flex flex-column flex-md-row align-items-center gap-3 justify-content-center'>
+    <input type='file' name='file' class='form-control w-auto' required>
+    <button type='submit' class='btn btn-primary minimal-btn' title='Upload file'><i class="bi bi-upload"></i> Upload</button>
+  </form>
+  <div class="progress mb-4" style="height: 24px; display: none;" id="uploadProgressWrap">
+    <div id="uploadProgress" class="progress-bar progress-bar-striped progress-bar-animated bg-info" role="progressbar" style="width: 0%">0%</div>
+  </div>
+  <hr>
+  <div class="table-responsive">
+    <table class='table table-dark table-hover table-bordered align-middle rounded shadow-sm'>
+      <thead class="table-light">
+        <tr>
+          <th><i class="bi bi-file-earmark"></i> Name</th>
+          <th><i class="bi bi-hdd"></i> Size</th>
+          <th><i class="bi bi-calendar"></i> Uploaded</th>
+          <th><i class="bi bi-gear"></i> Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% files.forEach(file => { %>
+          <tr>
+            <td><i class="bi bi-file-earmark-text"></i> <%= file.originalName %></td>
+            <td><%= (file.size/1024/1024).toFixed(2) %> MB</td>
+            <td><%= new Date(file.uploadedAt).toLocaleString() %></td>
+            <td class="d-flex flex-wrap gap-2">
+              <a href='/FileAccess/download/<%= file.id %>' class='btn btn-outline-success btn-sm minimal-btn' title='Download file'><i class="bi bi-download"></i></a>
+              <form method='POST' action='/FileAccess/delete/<%= file.id %>' style='display:inline'>
+                <button type='submit' class='btn btn-outline-danger btn-sm minimal-btn' title='Delete file'><i class="bi bi-trash"></i></button>
+              </form>
+              <% if (!file.shared_publicToken) { %>
+                <form method='POST' action='/FileAccess/share/<%= file.id || file._id %>' class='d-inline'>
+                  <input type='hidden' name='share' value='1'>
+                  <button type='submit' class='btn btn-outline-info btn-sm minimal-btn' title='Share file (public link)'><i class="bi bi-link-45deg"></i></button>
+                </form>
+              <% } else { %>
+                <a href="/FileAccess/public/<%= file.shared_publicToken %>" target="_blank" class="btn btn-outline-warning btn-sm minimal-btn" title='Open public link'><i class="bi bi-link-45deg"></i></a>
+                <form method='POST' action='/FileAccess/unshare/<%= file.id || file._id %>' style='display:inline'>
+                  <button type='submit' class='btn btn-outline-danger btn-sm minimal-btn' title='Unshare file'><i class="bi bi-x-circle"></i></button>
+                </form>
+              <% } %>
+            </td>
+          </tr>
+        <% }) %>
+      </tbody>
+    </table>
+  </div>
+</div>
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    var uploadForm = document.getElementById('uploadForm');
+    if (uploadForm) {
+      uploadForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        var form = this;
+        var fileInput = form.querySelector('input[type="file"]');
+        if (!fileInput.files.length) return;
+        var data = new FormData(form);
+        var xhr = new XMLHttpRequest();
+        var progressWrap = document.getElementById('uploadProgressWrap');
+        var progressBar = document.getElementById('uploadProgress');
+        progressWrap.style.display = '';
+        xhr.upload.onprogress = function(e) {
+          if (e.lengthComputable) {
+            var percent = Math.round((e.loaded / e.total) * 100);
+            progressBar.style.width = percent + '%';
+            progressBar.textContent = percent + '%';
+          }
+        };
+        xhr.onload = function() {
+          if (xhr.status === 200) {
+            progressBar.classList.remove('progress-bar-animated');
+            progressBar.classList.add('bg-success');
+            progressBar.textContent = 'Upload complete';
+            setTimeout(function() { window.location.reload(); }, 800);
+          } else {
+            progressBar.classList.add('bg-danger');
+            progressBar.textContent = 'Error';
+          }
+        };
+        xhr.open('POST', form.action, true);
+        xhr.send(data);
+      });
+    }
+  });
+</script>

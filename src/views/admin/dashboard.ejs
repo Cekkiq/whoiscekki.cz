@@ -1,0 +1,106 @@
+<%- include('../layout', { title: 'Admin Panel' }) %>
+<style>
+  .admin-compact-form { max-width: 220px; margin: 0 auto; }
+  .admin-compact-input { min-width: 120px; max-width: 160px; }
+  .admin-send-btn { min-width: 80px; }
+</style>
+<div class="p-4 mt-5" style="max-width: 900px; margin: 0 auto;">
+  <h2 class="mb-4 text-center">Admin Panel</h2>
+  <h5 class="mb-3">Users</h5>
+  <div class="table-responsive mb-4">
+    <table class='table table-dark table-hover table-bordered align-middle rounded shadow-sm'>
+      <thead class="table-light">
+        <tr>
+          <th>Email</th>
+          <th>Role</th>
+          <th>Status</th>
+          <th>Registered</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% users.forEach(user => { %>
+          <tr>
+            <td><%= user.email %></td>
+            <td>
+              <% if (userRole === 'headadmin' && userId !== user.id) { %>
+                <form method='POST' action='/AdminPanel/Users/<%= user.id %>/role' class='d-flex admin-compact-form'>
+                  <select name='role' class='form-select form-select-sm me-2 admin-compact-input' <%= user.role === 'headadmin' ? 'disabled' : '' %>>
+                    <option value='user' <%= user.role === 'user' ? 'selected' : '' %>>user</option>
+                    <option value='admin' <%= user.role === 'admin' ? 'selected' : '' %>>admin</option>
+                  </select>
+                  <button type='submit' class='btn btn-outline-info btn-sm minimal-btn' style='min-width: 32px;' title='Change role' <%= user.role === 'headadmin' ? 'disabled' : '' %>>&#x21bb;</button>
+                </form>
+              <% } else { %>
+                <span class='text-light'><%= user.role %></span>
+              <% } %>
+            </td>
+            <td><%= user.isActive ? 'Active' : 'Inactive' %></td>
+            <td><%= new Date(user.registeredAt).toLocaleString() %></td>
+            <td class="d-flex flex-wrap gap-2">
+              <% if (userRole === 'admin' && (user.role === 'headadmin' || user.role === 'admin')) { %>
+                <!-- No actions for admin on headadmin or other admins -->
+              <% } else { %>
+                <% if (!user.isActive) { %>
+                  <form method='POST' action='/AdminPanel/Users/<%= user.id %>/activate' style='display:inline'>
+                    <button type='submit' class='btn btn-outline-success btn-sm minimal-btn' style='min-width: 32px;' title='Activate user'>&#x2714;</button>
+                  </form>
+                <% } %>
+                <% if (user.isActive) { %>
+                  <form method='POST' action='/AdminPanel/Users/<%= user.id %>/deactivate' style='display:inline'>
+                    <button type='submit' class='btn btn-outline-warning btn-sm minimal-btn' style='min-width: 32px;' title='Deactivate user'>&#x26D4;</button>
+                  </form>
+                <% } %>
+                <form method='POST' action='/AdminPanel/Users/<%= user.id %>/delete' style='display:inline'>
+                  <button type='submit' class='btn btn-outline-danger btn-sm minimal-btn' style='min-width: 32px;' title='Delete user'>&#x1F5D1;</button>
+                </form>
+                <form method='POST' action='/AdminPanel/Users/<%= user.id %>/impersonate' style='display:inline'>
+                  <button type='submit' class='btn btn-outline-info btn-sm minimal-btn' style='min-width: 32px;' title='Login as user'>&#x1F464;</button>
+                </form>
+              <% } %>
+            </td>
+          </tr>
+        <% }) %>
+      </tbody>
+    </table>
+  </div>
+  <hr>
+  <h5 class="mb-3">Tokens</h5>
+  <form method='POST' action='/AdminPanel/Invites' class='mb-3 admin-compact-form'>
+    <button type='submit' class='btn btn-primary minimal-btn w-100'>Generate New Invite Token</button>
+  </form>
+  <div class="table-responsive mb-4">
+    <table class='table table-dark table-hover table-bordered align-middle rounded shadow-sm mb-0'>
+      <thead class="table-light">
+        <tr>
+          <th>Token</th>
+          <th>Created</th>
+          <th>Used</th>
+          <th>Email</th>
+          <th>Delete</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% invites.forEach(invite => { %>
+          <tr>
+            <td style='word-break: break-all; max-width: 180px;'><%= invite.token %></td>
+            <td><%= new Date(invite.createdAt).toLocaleString() %></td>
+            <td><%= invite.used ? 'Yes' : 'No' %></td>
+            <td>
+              <form method='POST' action='/AdminPanel/Invites/send' class='d-flex admin-compact-form'>
+                <input type='hidden' name='token' value='<%= invite.token %>'>
+                <input type='email' name='email' class='form-control me-2 admin-compact-input' placeholder='Recipient email' required>
+                <button type='submit' class='btn btn-outline-info btn-sm minimal-btn admin-send-btn' title='Send invite by email'>Send</button>
+              </form>
+            </td>
+            <td>
+              <form method='POST' action='/AdminPanel/Invites/<%= invite.token %>/delete' style='display:inline'>
+                <button type='submit' class='btn btn-outline-danger btn-sm minimal-btn' style='min-width: 32px;' title='Delete token'>&#x1F5D1;</button>
+              </form>
+            </td>
+          </tr>
+        <% }) %>
+      </tbody>
+    </table>
+  </div>
+</div> 

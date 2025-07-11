@@ -1,0 +1,20 @@
+<%- include('../layout', { title: 'Shared File' }) %>
+<div class="card mt-5" style="max-width: 600px; margin: 0 auto;">
+  <h2 class="mb-4 text-center"><i class="bi bi-link-45deg"></i> Shared File</h2>
+  <% if (typeof error !== 'undefined' && error) { %>
+    <div class="error-handler"><i class="bi bi-exclamation-triangle-fill"></i> <%= error %></div>
+  <% } %>
+  <% if (requirePassword) { %>
+    <form method='POST' class="mb-3">
+      <div class='mb-3'>
+        <label for='password' class='form-label'><i class="bi bi-shield-lock"></i> Password</label>
+        <input type='password' class='form-control' id='password' name='password' required>
+      </div>
+      <button type='submit' class='btn btn-primary minimal-btn w-100'><i class="bi bi-download"></i> Download</button>
+    </form>
+  <% } else if (file) { %>
+    <div class="text-center">
+      <a href='' onclick='window.location.reload()' class='btn btn-success btn-lg minimal-btn'><i class="bi bi-download"></i> Download</a>
+    </div>
+  <% } %>
+</div> 

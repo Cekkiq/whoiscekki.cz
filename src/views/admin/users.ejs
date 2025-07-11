@@ -1,0 +1,41 @@
+<%- include('../layout', { title: 'Users' }) %>
+<div class="mt-5 mx-auto" style="max-width:900px;">
+  <h2 class="mb-4 text-center">Users</h2>
+  <hr>
+  <table class='table table-bordered table-sm align-middle'>
+    <thead class="table-light"><tr><th>Email</th><th>Role</th><th>Status</th><th>Registered</th><th>Actions</th></tr></thead>
+    <tbody>
+      <% users.forEach(user => { %>
+        <tr>
+          <td><%= user.email %></td>
+          <td>
+            <form method='POST' action='/AdminPanel/Users/<%= user.id %>/role' class='d-flex'>
+              <select name='role' class='form-select form-select-sm me-2' <%= user.role === 'headadmin' ? 'disabled' : '' %>>
+                <option value='user' <%= user.role === 'user' ? 'selected' : '' %>>user</option>
+                <option value='admin' <%= user.role === 'admin' ? 'selected' : '' %>>admin</option>
+                <option value='headadmin' <%= user.role === 'headadmin' ? 'selected' : '' %>>headadmin</option>
+              </select>
+              <button type='submit' class='btn btn-outline-dark btn-sm' <%= user.role === 'headadmin' ? 'disabled' : '' %>>Change</button>
+            </form>
+          </td>
+          <td><%= user.isActive ? 'Active' : 'Inactive' %></td>
+          <td><%= new Date(user.registeredAt).toLocaleString() %></td>
+          <td>
+            <form method='POST' action='/AdminPanel/Users/<%= user.id %>/activate' style='display:inline'>
+              <button type='submit' class='btn btn-outline-success btn-sm' <%= user.isActive ? 'disabled' : '' %>>Activate</button>
+            </form>
+            <form method='POST' action='/AdminPanel/Users/<%= user.id %>/deactivate' style='display:inline'>
+              <button type='submit' class='btn btn-outline-warning btn-sm' <%= !user.isActive ? 'disabled' : '' %>>Deactivate</button>
+            </form>
+            <form method='POST' action='/AdminPanel/Users/<%= user.id %>/delete' style='display:inline'>
+              <button type='submit' class='btn btn-outline-danger btn-sm'>Delete</button>
+            </form>
+            <form method='POST' action='/AdminPanel/Users/<%= user.id %>/impersonate' style='display:inline'>
+              <button type='submit' class='btn btn-outline-info btn-sm'>Impersonate</button>
+            </form>
+          </td>
+        </tr>
+      <% }) %>
+    </tbody>
+  </table>
+</div> 
