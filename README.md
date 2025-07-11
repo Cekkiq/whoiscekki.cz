@@ -1,6 +1,4 @@
-# WhoisCekki.cz
-
-A secure, minimalist cloud and admin system with invitation-only registration, 2FA, file sharing, and a modern UI. Built with Node.js, Express, EJS, Bootstrap, and SQLite.
+# whoiscekki.cz
 
 ## Features
 
