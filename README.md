@@ -1,23 +1,31 @@
 # WhoisCekki.cz
 
-A secure cloud and admin system with invitation-only registration, 2FA, file sharing, and more. Built with Node.js, Express, MongoDB, EJS, and Bootstrap.
+A secure, minimalist cloud and admin system with invitation-only registration, 2FA, file sharing, and a modern UI. Built with Node.js, Express, EJS, Bootstrap, and SQLite.
 
 ## Features
 
 - User roles: user, admin, headadmin
 - Invitation-based registration (token or email invite)
 - Email activation (SMTP)
-- JWT + session authentication
+- Session authentication (with JWT secret for session)
 - Optional 2FA (TOTP, Google Authenticator)
 - Account lockout after failed logins
 - Strong password hashing (bcrypt)
-- Personal cloud: upload (any type, up to 2GB), download, delete
+- Personal cloud: upload, download, delete files (any type, up to 2GB)
 - File sharing via public links (optional password, expiration)
 - Admin panel: manage users, roles, invites, impersonation
 - Clicker Game (public, persistent score)
-- Responsive UI (Bootstrap, dark/light mode)
-- Toast notifications, form validation
+- Responsive, minimalist UI (Bootstrap 5, W3CSS, dark mode)
 - Security: HTTPS-ready, rate limiting, helmet, CORS
+
+## Tech Stack
+
+- Node.js, Express
+- EJS (server-side templates)
+- Bootstrap 5, W3CSS
+- SQLite (via sqlite3)
+- Nodemailer (SMTP email)
+- bcrypt, speakeasy (2FA)
 
 ## Project Structure
 
@@ -25,44 +33,51 @@ A secure cloud and admin system with invitation-only registration, 2FA, file sha
 src/
   config/         # DB and app config
   controllers/    # Route logic
-  models/         # Mongoose schemas
+  middleware/     # Auth, admin, login-required
+  models/         # Data models (SQLite)
   routes/         # Express routes
-  utils/          # Helpers (e.g. headadmin init)
+  utils/          # Helpers (DB, headadmin init)
   views/          # EJS templates
-  public/         # Static files (CSS, JS)
+  public/         # Static files (CSS)
   uploads/        # User files
 ```
 
-## .env Example
+## Example .env
 
-Create a `.env` file in `src/` with:
+Create a `.env` file in the project root:
 
 ```
 PORT=3000
-MONGO_URI=mongodb://localhost/whoiscekki
 JWT_SECRET=supersecretkey
 SMTP_HOST=smtp.example.com
 SMTP_PORT=587
 SMTP_USER=no-reply@example.com
 SMTP_PASS=smtpPassword
+SMTP_SECURE=false
 UPLOAD_LIMIT=2147483648
-DEFAULT_ADMIN_EMAIL=cekki@proton.me
-DEFAULT_ADMIN_PASS=T@d1nUwU
+DEFAULT_ADMIN_EMAIL=admin@example.com
+DEFAULT_ADMIN_PASS=yourStrongPassword
+SQLITE_PATH=./data/app.db
 ```
 
-## Running the Project
+- `DEFAULT_ADMIN_EMAIL` and `DEFAULT_ADMIN_PASS` are used to create the first headadmin on first run.
+- `SQLITE_PATH` is optional (defaults to `./data/app.db`).
 
-1. Install dependencies:
-   ```
+## Setup & Usage
+
+1. **Install dependencies:**
+   ```sh
    npm install
    ```
-2. Set up your `.env` file as above.
-3. Start MongoDB locally or use a remote URI.
-4. Start the server:
-   ```
+2. **Create your `.env` file** (see above).
+3. **Run the server:**
+   ```sh
    node src/server.js
    ```
-5. Visit [http://localhost:3000](http://localhost:3000)
+4. **Visit** [http://localhost:3000](http://localhost:3000)
+
+- On first run, a headadmin account is created using the credentials from `.env`.
+- Use the admin panel to manage users, invites, and files.
 
 ## SMTP Setup
 
@@ -77,11 +92,8 @@ DEFAULT_ADMIN_PASS=T@d1nUwU
 - Rate limiting and account lockout after failed logins
 - Email verification required
 - HTTPS recommended for production
+- Sensitive files and folders are ignored via `.gitignore`
 
-## Note on `middleware/`
+## License
 
-The `middleware/` folder is present for future custom middleware (e.g. authentication, authorization, error handling). In this version, most logic is handled in controllers or via built-in Express middleware, but you can add custom middleware here for advanced use cases.
-
----
-
-MIT License
+MIT
