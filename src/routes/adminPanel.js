@@ -14,5 +14,12 @@ router.post('/Users/:id/deactivate', adminController.deactivateUser);
 router.post('/Users/:id/delete', adminController.deleteUser);
 router.post('/Users/:id/role', adminController.changeRole);
 router.post('/Users/:id/impersonate', adminController.impersonateUser);
+router.post('/Users/:id/subscription', adminController.changeSubscription);
+router.post('/Users/:id/score', adminController.updateUserScore);
 
-module.exports = router; 
+// Special Codes Routes
+router.get('/special-codes', adminController.specialCodes);
+router.post('/special-codes', adminController.createSpecialCode);
+router.delete('/special-codes/:id', adminController.deleteSpecialCode);
+
+module.exports = router;

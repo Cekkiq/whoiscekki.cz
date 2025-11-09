@@ -1,0 +1,31 @@
+<%- include('../layout', { title: title || 'Error' }) %>
+
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-6">
+            <div class="card border-danger">
+                <div class="card-header bg-danger text-white">
+                    <h4 class="mb-0">
+                        <i class="bi bi-exclamation-triangle me-2"></i> <%= title || 'Error' %>
+                    </h4>
+                </div>
+                <div class="card-body text-center p-4">
+                    <div class="alert-icon mb-4">
+                        <i class="bi bi-x-circle text-danger" style="font-size: 4rem;"></i>
+                    </div>
+                    
+                    <div class="alert alert-danger">
+                        <p class="mb-0">
+                            <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                            <%= message || 'An unexpected error occurred. Please try again later.' %>
+                        </p>
+                    </div>
+                    
+                    <a href="/" class="btn btn-outline-primary mt-3">
+                        <i class="bi bi-arrow-left me-2"></i> Return to Home
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

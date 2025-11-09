@@ -8,7 +8,6 @@ const crypto = require('crypto');
 const bcrypt = require('bcrypt');
 const fetch = require('node-fetch').default;
 
-// Registration (with invite token)
 exports.register = async (req, res) => {
   const { invite, email, password } = req.body;
   const tokenDoc = await InviteToken.findOne({ token: invite, used: false });
@@ -18,12 +17,11 @@ exports.register = async (req, res) => {
   const activationToken = crypto.randomBytes(20).toString('hex');
   const user = await User.create({ email, password, isActive: false, activationToken });
   await InviteToken.markUsed(invite, user.id);
-  // Send activation email
   const transporter = nodemailer.createTransport({
     host: config.smtp.host,
     port: config.smtp.port,
     auth: { user: config.smtp.user, pass: config.smtp.pass },
-    secure: config.smtp.secure === 'true' || config.smtp.secure === true // true/false podle .env
+    secure: config.smtp.secure === 'true' || config.smtp.secure === true
   });
   const link = `${req.protocol}://${req.get('host')}/Account/Activate/${activationToken}`;
   const mailOptions = {
@@ -43,7 +41,6 @@ exports.register = async (req, res) => {
   }
 };
 
-// Account activation
 exports.activate = async (req, res) => {
   const { token } = req.params;
   const user = await User.findByActivationToken(token);
@@ -56,7 +53,6 @@ exports.activate = async (req, res) => {
   res.render('login', { title: 'Login', info: 'Account activated. You can now log in.' });
 };
 
-// Login (step 1: email+password)
 exports.login = async (req, res) => {
   const { email, password, ReturnUrl } = req.body;
   const user = await User.findByEmail(email);
@@ -82,14 +78,12 @@ exports.login = async (req, res) => {
   user.lastLogin = new Date().toISOString();
   await User.update(user);
   req.session.userId = user.id;
-  // Only allow local ReturnUrl redirects
   if (ReturnUrl && /^\//.test(ReturnUrl)) {
     return res.redirect(ReturnUrl);
   }
   res.redirect('/Account/Manage');
 };
 
-// 2FA verify (login)
 exports.verify2FALogin = async (req, res) => {
   const { code } = req.body;
   const userId = req.session.pending2FA;
@@ -110,7 +104,6 @@ exports.verify2FALogin = async (req, res) => {
   res.redirect('/Account/Manage');
 };
 
-// 2FA setup
 exports.setup2FA = async (req, res) => {
   const user = await User.findById(req.session.userId);
   if (!user) return res.redirect('/Account/Login');
@@ -121,7 +114,6 @@ exports.setup2FA = async (req, res) => {
   res.render('2fa-setup', { title: '2FA Setup', otpauth_url: secret.otpauth_url, secret: secret.base32 });
 };
 
-// 2FA verify (setup)
 exports.verify2FA = async (req, res) => {
   const { code } = req.body;
   const user = await User.findById(req.session.userId);
@@ -217,7 +209,6 @@ exports.updateAccount = async (req, res) => {
   res.render('manage/profile', { title: 'Profile', user, error: 'Invalid action.' });
 };
 
-// Manage subpages
 exports.getManageProfile = async (req, res) => {
   const user = await User.findById(req.session.userId);
   if (!user) return res.redirect('/Account/Login');

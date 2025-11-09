@@ -1,0 +1,11 @@
+<% 
+  const locals = { 
+    title: 'Error',
+    userRole: typeof user !== 'undefined' ? user.role : null 
+  }; 
+%>
+<%- include('layout', locals) %>
+<div class="mt-5" style="max-width: 600px; margin: 0 auto; padding: 1.2em 0.5em; text-align: center;">
+  <h1 class="mb-4">An Error Occurred</h1>
+  <a href="/" class="btn btn-outline-light minimal-btn">Back to Home</a>
+</div>

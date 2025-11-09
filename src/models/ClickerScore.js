@@ -43,7 +43,19 @@ const ClickerScore = {
         }
       );
     });
+  },
+  async updateByUserId(userId, newScore) {
+    return new Promise((resolve, reject) => {
+      db.run(
+        'UPDATE clicker_scores SET score=?, lastClick=? WHERE user=?',
+        [newScore, new Date().toISOString(), userId],
+        function (err) {
+          if (err) return reject(err);
+          resolve();
+        }
+      );
+    });
   }
 };
 
-module.exports = ClickerScore; 
+module.exports = ClickerScore;

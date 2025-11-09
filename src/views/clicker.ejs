@@ -1,6 +1,278 @@
-<%- include('layout', { title: 'Access Denied' }) %>
-<div class="mt-5" style="max-width: 600px; margin: 0 auto; padding: 1.2em 0.5em; text-align: center;">
-  <h1 class="mb-4">Access Denied</h1>
-  <p class="mb-4">You do not have permission to view this page.</p>
-  <a href="/" class="btn btn-outline-light minimal-btn">Back to Home</a>
-</div> 
+<%- include('layout', { title: 'Clicker' }) %>
+
+<div class="container py-5" style="max-width: 720px;">
+  <div class="d-flex justify-content-between align-items-center mb-2">
+    <div>
+      <h1 class="h4 mb-0">Clicker Game</h1>
+      <div class="small text-muted">
+        Click the button to earn coins and find special codes!
+        <div class="mt-1">
+          <small class="text-muted">
+            <i class="bi bi-info-circle me-1"></i>
+            Found codes can be redeemed in the File Access section
+          </small>
+        </div>
+      </div>
+    </div>
+    <div class="badge bg-primary-subtle text-primary border border-primary px-3 py-2">
+      <i class="bi bi-coin me-1"></i> Coins: <span id="coins"><%= typeof coins !== 'undefined' ? coins : (typeof score !== 'undefined' ? score : 0) %></span>
+    </div>
+  </div>
+
+  <% if (typeof message !== 'undefined' && message) { %>
+    <div class="alert alert-success"><%= message %></div>
+  <% } %>
+
+  <div class="card p-4 mb-4 text-center">
+    <div class="mb-2 text-muted">Each click adds <strong>1</strong> + your <strong>Power</strong> level coins.</div>
+    <div class="small text-muted mb-2">Special code drop chance: <strong><span id="chance"><%= ((baseChance + (luck * luckBonusPerLevel)) * 100).toFixed(2) %>%</span></strong></div>
+    
+    <% if (foundCodes && foundCodes.length > 0) { %>
+      <div class="card mb-3">
+        <div class="card-header">
+          <h5 class="mb-0">Your Found Codes</h5>
+          <small class="text-muted">Go to File Access to redeem these codes</small>
+        </div>
+        <div class="card-body p-0">
+          <div class="table-responsive">
+            <table class="table table-hover mb-0">
+              <thead>
+                <tr>
+                  <th>Code</th>
+                  <th>Reward</th>
+                  <th>Status</th>
+                  <th>Found</th>
+                </tr>
+              </thead>
+              <tbody>
+                <% foundCodes.forEach(code => { %>
+                  <tr>
+                    <td class="font-monospace"><%= code.code %></td>
+                    <td><%= code.gb %> GB</td>
+                    <td>
+                      <% if (code.used) { %>
+                        <span class="badge bg-danger">Used by <%= code.used_by_email || 'someone' %></span>
+                      <% } else { %>
+                        <span class="badge bg-success">Unused</span>
+                      <% } %>
+                    </td>
+                    <td><%= code.found_at %></td>
+                  </tr>
+                <% }); %>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    <% } %>
+    
+    <% if (typeof isHeadAdmin !== 'undefined' && isHeadAdmin) { %>
+      <div class="small text-info mt-1">Next code in ~<span id="clicksToNextCode">0</span> clicks</div>
+      <div class="small text-muted mt-2">Code drop chances: 
+        <% codeTypes.forEach(type => { %>
+          <span class="me-2"><%= type.gb %>GB: <%= type.chance %>%</span>
+        <% }); %>
+      </div>
+    <% } %>
+    <button id="clickBtn" class="btn btn-lg btn-primary px-4 py-3 mt-3"><i class="bi bi-hand-index-thumb me-2"></i>Click!</button>
+  </div>
+
+  <div class="row g-3">
+    <div class="col-12 col-md-6">
+      <div class="card p-3 h-100">
+        <div class="d-flex align-items-center mb-2">
+          <i class="bi bi-lightning-charge text-warning me-2"></i>
+          <div class="fw-bold">Power</div>
+        </div>
+        <div class="small text-muted mb-2">Coins per click: 1 + Power</div>
+        <div class="small">Level: <span id="level"><%= typeof level !== 'undefined' ? level : 0 %></span></div>
+        <button id="upgradePowerBtn" class="btn btn-outline-warning mt-2 w-100">
+          <i class="bi bi-arrow-up-circle me-2"></i>Buy Power (Cost: <span id="cost"><%= typeof cost !== 'undefined' ? cost : 50 %></span>)
+        </button>
+      </div>
+    </div>
+    <div class="col-12 col-md-6">
+      <div class="card p-3 h-100">
+        <div class="d-flex align-items-center mb-2">
+          <i class="bi bi-stars text-info me-2"></i>
+          <div class="fw-bold">Luck</div>
+        </div>
+        <div class="small text-muted mb-2">Increases special code drop chance (+0.1% per level).</div>
+        <div class="small">Luck level: <span id="luck"><%= typeof luck !== 'undefined' ? luck : 0 %></span></div>
+        <button id="upgradeLuckBtn" class="btn btn-outline-info mt-2 w-100">
+          <i class="bi bi-arrow-up-circle me-2"></i>Buy Luck (Cost: <span id="luckCost"><%= typeof luckCost !== 'undefined' ? luckCost : 100 %></span>)
+        </button>
+      </div>
+    </div>
+  </div>
+  <div id="upgradeError" class="text-danger small mt-3" style="display:none;"></div>
+</div>
+
+<script>
+  (function(){
+    const coinsEl = document.getElementById('coins');
+    const levelEl = document.getElementById('level');
+    const costEl = document.getElementById('cost');
+    const luckEl = document.getElementById('luck');
+    const luckCostEl = document.getElementById('luckCost');
+    const chanceEl = document.getElementById('chance');
+    const clicksToNextCodeEl = document.getElementById('clicksToNextCode');
+    const clickBtn = document.getElementById('clickBtn');
+    const upgradePowerBtn = document.getElementById('upgradePowerBtn');
+    const upgradeLuckBtn = document.getElementById('upgradeLuckBtn');
+    const errEl = document.getElementById('upgradeError');
+
+    let cooldownActive = false;
+    let cooldownInterval;
+    let clickCount = 0;
+    let lastCodeDropAt = 0;
+    const baseChance = <%- baseChance %>;
+    const luckBonusPerLevel = <%- luckBonusPerLevel %>;
+
+    function startCooldown(seconds) {
+      if (cooldownActive) return;
+      
+      cooldownActive = true;
+      clickBtn.disabled = true;
+      const cooldownTime = Date.now() + (seconds * 1000);
+      
+      // Show initial cooldown message
+      const originalText = clickBtn.textContent;
+      
+      function updateCooldown() {
+        const now = Date.now();
+        const remaining = Math.ceil((cooldownTime - now) / 1000);
+        
+        if (remaining <= 0) {
+          // Cooldown finished
+          clearInterval(cooldownInterval);
+          clickBtn.disabled = false;
+          clickBtn.textContent = originalText;
+          cooldownActive = false;
+          return;
+        }
+        
+        // Update button text with remaining time
+        const minutes = Math.floor(remaining / 60);
+        const seconds = remaining % 60;
+        clickBtn.textContent = `Wait ${minutes}:${seconds.toString().padStart(2, '0')}`;
+      }
+      
+      // Update immediately and then every second
+      updateCooldown();
+      cooldownInterval = setInterval(updateCooldown, 1000);
+    }
+    
+    async function doClick(){
+      try {
+        clickCount++;
+        updateClicksToNextCode();
+        
+        const res = await fetch('/Clicker/click', { 
+          method: 'POST', 
+          headers: { 'Accept': 'application/json' }, 
+          credentials: 'same-origin' 
+        });
+        
+        if (!res.ok) {
+          const error = await res.json().catch(() => ({}));
+          if (error.retryAfter) {
+            startCooldown(error.retryAfter);
+            showToast(error.error || 'Please wait before clicking again', 'error');
+          }
+          return;
+        }
+        
+        const data = await res.json();
+        if (typeof data.coins !== 'undefined') {
+          coinsEl.textContent = data.coins;
+        }
+        
+        if (data.drop && data.drop.code) {
+          const msg = `Lucky! You found a code ${data.drop.code} (+${data.drop.gb} GB). Redeem it on File Access.`;
+          showToast(msg, 'success');
+          lastCodeDropAt = clickCount;
+        }
+      } catch (error) {
+        console.error('Click error:', error);
+      }
+    }
+
+    function refreshChance(){
+      const luck = Number(luckEl ? luckEl.textContent : 0) || 0;
+      const val = (0.2 + (luck * 0.1)).toFixed(1) + '%';
+      if (chanceEl) chanceEl.textContent = val;
+    }
+
+    async function doUpgrade(type){
+      errEl.style.display = 'none';
+      try {
+        const res = await fetch('/Clicker/upgrade', { method: 'POST', headers: { 'Accept': 'application/json', 'Content-Type': 'application/x-www-form-urlencoded' }, credentials: 'same-origin', body: 'type=' + encodeURIComponent(type) });
+        const data = await res.json();
+        if (data && data.success) {
+          if (typeof data.level !== 'undefined') levelEl.textContent = data.level;
+          if (typeof data.luck !== 'undefined') luckEl.textContent = data.luck;
+          if (typeof data.coins !== 'undefined') coinsEl.textContent = data.coins;
+          if (typeof data.nextCost !== 'undefined') {
+            if (type === 'luck') luckCostEl.textContent = data.nextCost; else costEl.textContent = data.nextCost;
+          }
+          refreshChance();
+          showToast('Upgrade purchased!');
+        } else {
+          errEl.textContent = (data && data.error) ? data.error : 'Upgrade failed';
+          errEl.style.display = '';
+        }
+      } catch (_) {
+        errEl.textContent = 'Upgrade failed';
+        errEl.style.display = '';
+      }
+    }
+
+    function showToast(message){
+      try {
+        const div = document.createElement('div');
+        div.className = 'alert alert-success position-fixed top-0 end-0 m-3';
+        div.textContent = message;
+        document.body.appendChild(div);
+        setTimeout(()=>{ div.remove(); }, 2500);
+      } catch(_) { alert(message); }
+    }
+
+    function updateClicksToNextCode() {
+      if (!clicksToNextCodeEl) return;
+      
+      const luck = parseInt(luckEl.textContent) || 0;
+      const chance = baseChance + (luck * luckBonusPerLevel);
+      // Calculate the expected number of clicks until next code drop
+      const expectedClicks = Math.ceil(1 / chance);
+      // Calculate remaining clicks based on current count
+      const remainingClicks = Math.max(0, expectedClicks - (clickCount - lastCodeDropAt));
+      
+      clicksToNextCodeEl.textContent = remainingClicks;
+      
+      // Update the color based on how close we are to the next code
+      const percentage = Math.min(100, Math.round(((clickCount - lastCodeDropAt) / expectedClicks) * 100));
+      if (percentage > 80) {
+        clicksToNextCodeEl.className = 'text-success fw-bold';
+      } else if (percentage > 50) {
+        clicksToNextCodeEl.className = 'text-warning';
+      } else {
+        clicksToNextCodeEl.className = 'text-info';
+      }
+    }
+  
+    // Update the counter when luck changes
+    if (luckEl) {
+      const observer = new MutationObserver(updateClicksToNextCode);
+      observer.observe(luckEl, { childList: true, characterData: true, subtree: true });
+    }
+  
+    // Initial update
+    updateClicksToNextCode();
+
+    if (clickBtn) clickBtn.addEventListener('click', doClick);
+    if (upgradePowerBtn) upgradePowerBtn.addEventListener('click', () => doUpgrade('power'));
+    if (upgradeLuckBtn) upgradeLuckBtn.addEventListener('click', () => doUpgrade('luck'));
+    refreshChance();
+  })();
+</script>

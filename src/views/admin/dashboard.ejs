@@ -4,8 +4,8 @@
   .admin-compact-input { min-width: 120px; max-width: 160px; }
   .admin-send-btn { min-width: 80px; }
 </style>
-<div class="p-4 mt-5" style="max-width: 900px; margin: 0 auto;">
-  <h2 class="mb-4 text-center">Admin Panel</h2>
+<div class="p-4 mt-5" style="max-width: 1200px; margin: 0 auto;">
+  <h2 class="mb-4">Admin Panel</h2>
   <h5 class="mb-3">Users</h5>
   <div class="table-responsive mb-4">
     <table class='table table-dark table-hover table-bordered align-middle rounded shadow-sm'>
@@ -14,6 +14,8 @@
           <th>Email</th>
           <th>Role</th>
           <th>Status</th>
+          <th>Plan</th>
+          <th>Coins</th>
           <th>Registered</th>
           <th>Actions</th>
         </tr>
@@ -36,6 +38,39 @@
               <% } %>
             </td>
             <td><%= user.isActive ? 'Active' : 'Inactive' %></td>
+            <td>
+              <% if (userRole === 'headadmin') { %>
+                <form method='POST' action='/AdminPanel/Users/<%= user.id %>/subscription' class='d-flex admin-compact-form'>
+                  <select name='subscription_id' class='form-select form-select-sm me-2 admin-compact-input'>
+                    <% (plans || []).forEach(function(pl){ %>
+                      <option value='<%= pl.id %>' <%= Number(user.subscription_id || 1) === Number(pl.id) ? 'selected' : '' %>><%= pl.name %></option>
+                    <% }); %>
+                  </select>
+                  <button type='submit' class='btn btn-outline-success btn-sm minimal-btn' style='min-width: 32px;' title='Change plan'>&#x21bb;</button>
+                </form>
+              <% } else { %>
+                <% const currentPlan = (plans || []).find(function(pl){ return Number(pl.id) === Number(user.subscription_id || 1); }); %>
+                <span class='text-light'><%= currentPlan ? currentPlan.name : 'Free' %></span>
+              <% } %>
+            </td>
+            <td>
+              <% if (userRole === 'headadmin') { %>
+                <div class="input-group input-group-sm" style="max-width: 120px;">
+                  <input type="number" class="form-control form-control-sm score-input" 
+                         data-user-id="<%= user.id %>" 
+                         value="<%= user.score || 0 %>" 
+                         min="0" 
+                         style="max-width: 80px;">
+                  <button class="btn btn-outline-primary btn-sm update-score" 
+                          data-user-id="<%= user.id %>"
+                          style="min-width: 30px;">
+                    ✓
+                  </button>
+                </div>
+              <% } else { %>
+                <span class="badge bg-secondary"><%= user.score || 0 %></span>
+              <% } %>
+            </td>
             <td><%= new Date(user.registeredAt).toLocaleString() %></td>
             <td class="d-flex flex-wrap gap-2">
               <% if (userRole === 'admin' && (user.role === 'headadmin' || user.role === 'admin')) { %>
@@ -103,4 +138,340 @@
       </tbody>
     </table>
   </div>
-</div> 
+  
+  <% if (user.role === 'headadmin') { %>
+    <hr>
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <h5 class="mb-0">Special Codes</h5>
+      <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#createCodeModal">
+        <i class="bi bi-plus"></i> Create Code
+      </button>
+    </div>
+    
+    <div class="table-responsive mb-4">
+      <% if (specialCodes && specialCodes.length > 0) { %>
+        <table class="table table-dark table-hover table-bordered align-middle rounded shadow-sm">
+          <thead class="table-light">
+            <tr>
+              <th>Code</th>
+              <th>GB Amount</th>
+              <th>Uses</th>
+              <th>Max Uses</th>
+              <th>Created By</th>
+              <th>Created At</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% specialCodes.forEach(code => { %>
+              <tr>
+                <td><code><%= code.code %></code></td>
+                <td><%= code.gb_amount %></td>
+                <td><%= code.use_count %></td>
+                <td><%= code.max_uses === 0 ? 'Unlimited' : code.max_uses %></td>
+                <td><%= code.creator || 'System' %></td>
+                <td><%= new Date(code.created_at).toLocaleString() %></td>
+                <td>
+                  <button class="btn btn-sm btn-danger delete-code" data-id="<%= code.id %>">
+                    <i class="bi bi-trash"></i> Delete
+                  </button>
+                </td>
+              </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      <% } else { %>
+        <div class="alert alert-info">No special codes created yet.</div>
+      <% } %>
+    </div>
+    
+    <!-- Create Code Modal -->
+    <div class="modal fade" id="createCodeModal" tabindex="-1" aria-hidden="true">
+      <div class="modal-dialog">
+        <div class="modal-content bg-dark text-light">
+          <div class="modal-header border-secondary">
+            <h5 class="modal-title">✨ Create New Code</h5>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <form id="createCodeForm">
+            <div class="modal-body">
+              <div class="mb-4">
+                <label for="code" class="form-label d-flex justify-content-between align-items-center">
+                  <span>Code</span>
+                  <button type="button" id="generateCodeBtn" class="btn btn-sm btn-outline-info">
+                    <i class="bi bi-shuffle me-1"></i> Generate Random Code
+                  </button>
+                </label>
+                <div class="input-group">
+                  <span class="input-group-text bg-dark text-light border-secondary">SC-</span>
+                  <input type="text" class="form-control bg-dark text-light border-secondary code-segment" id="code1" maxlength="4" pattern="[A-Z0-9]{4}" required>
+                  <span class="input-group-text bg-dark text-light border-0 px-1">-</span>
+                  <input type="text" class="form-control bg-dark text-light border-secondary code-segment" id="code2" maxlength="4" pattern="[A-Z0-9]{4}" required>
+                  <span class="input-group-text bg-dark text-light border-0 px-1">-</span>
+                  <input type="text" class="form-control bg-dark text-light border-secondary code-segment" id="code3" maxlength="4" pattern="[A-Z0-9]{4}" required>
+                  <input type="hidden" id="code" name="code" required>
+                </div>
+                <div class="form-text text-muted mt-2">Format: SC-XXXX-XXXX-XXXX (uppercase letters and numbers)</div>
+              </div>
+              
+              <div class="row g-3">
+                <div class="col-md-8">
+                  <label for="gbAmount" class="form-label">Storage Amount (GB)</label>
+                  <div class="input-group">
+                    <input type="number" step="0.1" min="0.1" class="form-control bg-dark text-light border-secondary" id="gbAmount" name="gbAmount" required>
+                    <span class="input-group-text bg-dark text-light border-secondary">GB</span>
+                  </div>
+                  <div class="form-text text-muted">Enter the amount of storage to add (e.g., 5 or 2.5)</div>
+                </div>
+                <div class="col-md-4">
+                  <label for="maxUses" class="form-label">Max Uses</label>
+                  <input type="number" min="1" class="form-control bg-dark text-light border-secondary" id="maxUses" name="maxUses" placeholder="1">
+                  <div class="form-text text-muted">Leave empty for single use</div>
+                </div>
+              </div>
+            </div>
+            <div class="modal-footer border-secondary">
+              <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                <i class="bi bi-x-lg me-1"></i> Cancel
+              </button>
+              <button type="submit" class="btn btn-primary">
+                <i class="bi bi-save me-1"></i> Create Code
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+    
+    <style>
+      .code-segment {
+        text-transform: uppercase;
+        text-align: center;
+        font-family: 'Courier New', monospace;
+        font-weight: bold;
+        letter-spacing: 1px;
+      }
+      .code-segment:focus {
+        border-color: #6c757d;
+        box-shadow: 0 0 0 0.25rem rgba(108, 117, 125, 0.25);
+      }
+      .form-control:focus, .form-select:focus {
+        border-color: #6c757d;
+        box-shadow: 0 0 0 0.25rem rgba(108, 117, 125, 0.25);
+      }
+    </style>
+    
+    <script>
+    // Generate random code segment (4 alphanumeric characters)
+    function generateCodeSegment() {
+      const chars = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+      let result = '';
+      for (let i = 0; i < 4; i++) {
+        result += chars.charAt(Math.floor(Math.random() * chars.length));
+      }
+      return result;
+    }
+    
+    // Generate complete code in format SC-XXXX-XXXX-XXXX
+    function generateRandomCode() {
+      return `SC-${generateCodeSegment()}-${generateCodeSegment()}-${generateCodeSegment()}`;
+    }
+    
+    // Update hidden input with full code
+    function updateCodeInput() {
+      const code1 = document.getElementById('code1').value || '';
+      const code2 = document.getElementById('code2').value || '';
+      const code3 = document.getElementById('code3').value || '';
+      document.getElementById('code').value = `SC-${code1}-${code2}-${code3}`.toUpperCase();
+    }
+    
+    // Auto-focus next input field
+    function focusNextInput(currentInput) {
+      if (currentInput.value.length === currentInput.maxLength) {
+        const next = currentInput.nextElementSibling;
+        if (next && next.classList.contains('code-segment')) {
+          next.focus();
+        }
+      }
+    }
+    
+    document.addEventListener('DOMContentLoaded', function() {
+      const createForm = document.getElementById('createCodeForm');
+      const generateBtn = document.getElementById('generateCodeBtn');
+      const codeInputs = document.querySelectorAll('.code-segment');
+      
+      // Generate random code when button is clicked
+      if (generateBtn) {
+        generateBtn.addEventListener('click', function(e) {
+          e.preventDefault();
+          const code = generateRandomCode();
+          const parts = code.split('-');
+          document.getElementById('code1').value = parts[1];
+          document.getElementById('code2').value = parts[2];
+          document.getElementById('code3').value = parts[3];
+          updateCodeInput();
+          document.getElementById('gbAmount').focus();
+        });
+      }
+      
+      // Handle code segment inputs
+      codeInputs.forEach((input, index) => {
+        // Auto-uppercase and validate input
+        input.addEventListener('input', function() {
+          this.value = this.value.toUpperCase().replace(/[^A-Z0-9]/g, '');
+          updateCodeInput();
+          focusNextInput(this);
+        });
+        
+        // Allow pasting code in format XXXX-XXXX-XXXX or SC-XXXX-XXXX-XXXX
+        input.addEventListener('paste', function(e) {
+          e.preventDefault();
+          const paste = (e.clipboardData || window.clipboardData).getData('text').toUpperCase();
+          let cleanCode = paste.replace(/[^A-Z0-9]/g, '');
+          
+          if (paste.startsWith('SC')) {
+            cleanCode = cleanCode.substring(2); // Remove 'SC' if present
+          }
+          
+          if (cleanCode.length >= 12) {
+            document.getElementById('code1').value = cleanCode.substring(0, 4);
+            document.getElementById('code2').value = cleanCode.substring(4, 8);
+            document.getElementById('code3').value = cleanCode.substring(8, 12);
+            updateCodeInput();
+            document.getElementById('gbAmount').focus();
+          } else if (cleanCode.length > 0) {
+            this.value = cleanCode.substring(0, 4);
+            updateCodeInput();
+            focusNextInput(this);
+          }
+        });
+      });
+      
+      // Handle form submission
+      if (createForm) {
+        createForm.addEventListener('submit', async function(e) {
+          e.preventDefault();
+          
+          // Update the hidden code input before submission
+          updateCodeInput();
+          
+          const formData = new FormData(createForm);
+          const data = Object.fromEntries(formData.entries());
+          
+          // Add CSRF token if needed
+          const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
+          const headers = {
+            'Content-Type': 'application/json'
+          };
+          
+          if (csrfToken) {
+            headers['X-CSRF-Token'] = csrfToken;
+          }
+          
+          try {
+            const response = await fetch('/AdminPanel/special-codes', {
+              method: 'POST',
+              headers: headers,
+              body: JSON.stringify(data)
+            });
+            
+            const result = await response.json();
+            
+            if (result.success) {
+              // Close modal and refresh page
+              const modal = bootstrap.Modal.getInstance(document.getElementById('createCodeModal'));
+              if (modal) modal.hide();
+              window.location.reload();
+            } else {
+              alert(result.error || 'Error creating code');
+            }
+          } catch (error) {
+            console.error('Error:', error);
+            alert('An error occurred while creating the code');
+          }
+        });
+      }
+      
+      // Handle delete buttons
+      document.querySelectorAll('.delete-code').forEach(button => {
+        button.addEventListener('click', async function() {
+          const codeId = this.getAttribute('data-id');
+          
+          if (!confirm('Are you sure you want to delete this code?')) {
+            return;
+          }
+          
+          try {
+            const response = await fetch(`/AdminPanel/special-codes/${codeId}`, {
+              method: 'DELETE'
+            });
+            
+            const result = await response.json();
+            
+            if (result.success) {
+              this.closest('tr').remove();
+            } else {
+              alert(result.error || 'Error deleting code');
+            }
+          } catch (error) {
+            console.error('Error:', error);
+            alert('An error occurred while deleting the code');
+          }
+        });
+      });
+    });
+
+    // Handle score updates
+    document.querySelectorAll('.update-score').forEach(button => {
+      button.addEventListener('click', async (e) => {
+        const userId = e.target.getAttribute('data-user-id');
+        const input = document.querySelector(`.score-input[data-user-id="${userId}"]`);
+        const score = input.value;
+        
+        try {
+          const response = await fetch(`/AdminPanel/Users/${userId}/score`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ score })
+          });
+          
+          const result = await response.json();
+          
+          if (result.success) {
+            // Show success feedback
+            const originalText = button.textContent;
+            button.textContent = '✓';
+            button.classList.remove('btn-outline-primary');
+            button.classList.add('btn-success');
+            
+            // Reset button after 2 seconds
+            setTimeout(() => {
+              button.textContent = originalText;
+              button.classList.remove('btn-success');
+              button.classList.add('btn-outline-primary');
+            }, 2000);
+          } else {
+            alert('Failed to update score: ' + (result.error || 'Unknown error'));
+          }
+        } catch (error) {
+          console.error('Error updating score:', error);
+          alert('Failed to update score. Please try again.');
+        }
+      });
+    });
+
+    // Allow pressing Enter to submit score
+    document.querySelectorAll('.score-input').forEach(input => {
+      input.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+          const userId = e.target.getAttribute('data-user-id');
+          const button = document.querySelector(`.update-score[data-user-id="${userId}"]`);
+          if (button) button.click();
+        }
+      });
+    });
+    </script>
+  <% } %>
+</div>

@@ -14,4 +14,8 @@ module.exports = {
   uploadLimit: process.env.UPLOAD_LIMIT || 2147483648,
   defaultAdminEmail: process.env.DEFAULT_ADMIN_EMAIL,
   defaultAdminPass: process.env.DEFAULT_ADMIN_PASS,
-}; 
+  clicker: {
+    baseChance: 0.002,
+    luckBonusPerLevel: 0.001,
+  },
+};

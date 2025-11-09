@@ -1,0 +1,54 @@
+<%- include('../layout', { title: 'Security Alert - Infected File' }) %>
+
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-6">
+            <div class="card border-danger">
+                <div class="card-header bg-danger text-white">
+                    <h4 class="mb-0">
+                        <i class="bi bi-shield-exclamation me-2"></i>Security Alert
+                    </h4>
+                </div>
+                <div class="card-body text-center p-4">
+                    <div class="alert-icon mb-4">
+                        <i class="bi bi-shield-x text-danger" style="font-size: 4rem;"></i>
+                    </div>
+                    
+                    <h3 class="text-danger mb-3">Virus Detected!</h3>
+                    
+                    <div class="alert alert-danger">
+                        <p class="mb-0">
+                            <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                            The file "<strong><%= fileName %></strong>" has been flagged as potentially harmful.
+                        </p>
+                    </div>
+                    
+                    <% if (viruses && viruses.length > 0) { %>
+                        <div class="mt-4 text-start">
+                            <h5>Detected Threats:</h5>
+                            <ul class="list-group">
+                                <% viruses.forEach(virus => { %>
+                                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                                        <span><i class="bi bi-bug-fill text-danger me-2"></i> <%= virus %></span>
+                                        <span class="badge bg-danger rounded-pill">Threat</span>
+                                    </li>
+                                <% }); %>
+                            </ul>
+                        </div>
+                    <% } %>
+                    
+                    <div class="alert alert-warning mt-4">
+                        <p class="mb-0">
+                            <i class="bi bi-info-circle-fill me-2"></i>
+                            For your safety, this file has been blocked from downloading.
+                        </p>
+                    </div>
+                    
+                    <a href="/" class="btn btn-outline-primary mt-3">
+                        <i class="bi bi-arrow-left me-2"></i> Return to Safety
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

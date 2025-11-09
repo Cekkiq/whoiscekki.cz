@@ -13,33 +13,75 @@ const fileAccessRoutes = require('./routes/fileAccess');
 const clickerRoutes = require('./routes/clicker');
 const initDb = require('./utils/initDb');
 const User = require('./models/User');
+const flash = require('connect-flash');
 
 const app = express();
 
-// Inicializace headadmina
-const initHeadAdmin = require('./utils/initHeadAdmin');
-initHeadAdmin();
 initDb();
 
-// Set EJS as view engine
+const initHeadAdmin = require('./utils/initHeadAdmin');
+initHeadAdmin();
+
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
+app.use(express.static(path.join(__dirname, 'public')));
 
-// Middleware
+app.use(flash());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
-app.use(helmet());
+app.use(
+  helmet({
+    contentSecurityPolicy: {
+      useDefaults: true,
+      directives: {
+        "default-src": ["'self'"],
+        "script-src": [
+          "'self'",
+          "https://cdn.basecoat.it",
+          "cdn.jsdelivr.net",
+          "'unsafe-inline'",
+          "https://www.highperformanceformat.com",
+          "https://*.highperformanceformat.com"
+        ],
+        "style-src": [
+          "'self'",
+          "'unsafe-inline'",
+          "https://cdn.basecoat.it",
+          "cdn.jsdelivr.net"
+        ],
+        "connect-src": [
+          "'self'",
+          "https://cdn.basecoat.it",
+          "cdn.jsdelivr.net",
+          "https://www.highperformanceformat.com"
+        ],
+        "img-src": [
+          "'self'",
+          "data:",
+          "https://cdn.basecoat.it",
+          "https://www.highperformanceformat.com"
+        ],
+        "frame-src": ["'self'", "https://www.highperformanceformat.com"]
+      }
+    }
+  })
+);
+
 app.use(cors());
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Rate limiting
 const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, // limit each IP
+  windowMs: 15 * 60 * 1000,
+  max: 100,
 });
-app.use(limiter);
+app.use((req, res, next) => {
+  if (req.path && (
+    req.path.startsWith('/FileAccess/upload') || 
+    req.path.startsWith('/Clicker')
+  )) return next();
+  return limiter(req, res, next);
+});
 
-// Session
 app.use(
   session({
     secret: config.jwtSecret,
@@ -50,13 +92,10 @@ app.use(
   })
 );
 
-// Zpřístupním userId do všech EJS šablon
 app.use((req, res, next) => {
   res.locals.userId = req.session.userId;
   next();
 });
-
-// Přidat middleware pro načtení role uživatele
 app.use(async (req, res, next) => {
   if (req.session && req.session.userId) {
     try {
@@ -71,9 +110,21 @@ app.use(async (req, res, next) => {
   next();
 });
 
-// Basic route
+const db = require('./config/db');
+app.use((req, res, next) => {
+  if (req.session && req.session.userId) {
+    db.get('SELECT score FROM clicker_scores WHERE user=?', [req.session.userId], (err, row) => {
+      res.locals.coins = row ? Number(row.score) : 0;
+      next();
+    });
+  } else {
+    res.locals.coins = 0;
+    next();
+  }
+});
+
 app.get('/', (req, res) => {
-  res.render('index', { title: 'Welcome to WhoisCekki.cz' });
+  res.render('index', { title: 'whoiscekki.cz | home' });
 });
 
 app.use('/Account', accountRoutes);
@@ -81,7 +132,6 @@ app.use('/AdminPanel', adminPanelRoutes);
 app.use('/FileAccess', fileAccessRoutes);
 app.use('/Clicker', clickerRoutes);
 
-// Start server
 app.listen(config.port, () => {
   console.log(`Server running on port ${config.port}`);
-}); 
+});

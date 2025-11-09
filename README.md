@@ -1,97 +1,234 @@
 # whoiscekki.cz
 
+A secure file sharing and management platform with user authentication, file uploads, and sharing capabilities.
+
 ## Features
 
-- User roles: user, admin, headadmin
-- Invitation-based registration (token or email invite)
-- Email activation (SMTP)
-- Session authentication (with JWT secret for session)
-- Optional 2FA (TOTP, Google Authenticator)
-- Account lockout after failed logins
-- Strong password hashing (bcrypt)
-- Personal cloud: upload, download, delete files (any type, up to 2GB)
-- File sharing via public links (optional password, expiration)
-- Admin panel: manage users, roles, invites, impersonation
-- Clicker Game (public, persistent score)
-- Responsive, minimalist UI (Bootstrap 5, W3CSS, dark mode)
-- Security: HTTPS-ready, rate limiting, helmet, CORS
+### User Management
+- 👥 Multiple user roles: user, admin, headadmin
+- 🔑 Invitation-based registration (token or email invite)
+- ✉️ Email verification (SMTP)
+- 🔒 Session-based authentication with JWT
+- 🔐 Optional Two-Factor Authentication (2FA) via TOTP (Google Authenticator)
+- 🔄 Account lockout after multiple failed login attempts
+- 🔑 Strong password hashing with bcrypt
+
+### File Management
+- ☁️ Personal cloud storage (any file type, up to 2GB per file)
+- 🔗 Share files via public links
+- ⏳ Set link expiration dates
+- 🔐 Password-protect shared links
+- 📁 Organize files in folders
+- 🔍 Search functionality
+
+### Admin Features
+- 👑 HeadAdmin panel
+- 👥 User management (create, edit, delete users)
+- 📊 System statistics
+- 📨 Invitation management
+- 🔄 User impersonation
+- ⚙️ System settings
+
+### Additional Features
+- 🎮 Clicker Game with persistent high scores
+- 🌓 Dark/Light mode
+- 📱 Responsive design (works on mobile & desktop)
+- 🚀 Fast and efficient file handling
+- 🔄 Real-time updates
 
 ## Tech Stack
 
-- Node.js, Express
-- EJS (server-side templates)
-- Bootstrap 5, W3CSS
-- SQLite (via sqlite3)
-- Nodemailer (SMTP email)
-- bcrypt, speakeasy (2FA)
+### Backend
+- **Runtime**: Node.js
+- **Framework**: Express.js
+- **Database**: SQLite (with sqlite3)
+- **Templating**: EJS
+- **Authentication**: Passport.js, JWT
+- **Email**: Nodemailer
+- **File Processing**: Multer, FFmpeg
+- **Security**: Helmet, CORS, rate limiting
+- **2FA**: speakeasy
+
+### Frontend
+- **CSS Framework**: Bootstrap 5, W3CSS
+- **Icons**: Bootstrap Icons
+- **JavaScript**: Vanilla JS with modern ES6+ features
+- **Responsive Design**: Mobile-first approach
 
 ## Project Structure
 
 ```
 src/
-  config/         # DB and app config
-  controllers/    # Route logic
-  middleware/     # Auth, admin, login-required
-  models/         # Data models (SQLite)
-  routes/         # Express routes
-  utils/          # Helpers (DB, headadmin init)
-  views/          # EJS templates
-  public/         # Static files (CSS)
-  uploads/        # User files
+├── config/           # Configuration files
+│   ├── auth.js      # Authentication settings
+│   ├── db.js        # Database configuration
+│   └── index.js     # Main config
+├── controllers/      # Route controllers
+│   ├── adminController.js
+│   ├── authController.js
+│   ├── clickerController.js
+│   └── fileController.js
+├── middleware/       # Custom middleware
+│   ├── auth.js      # Authentication middleware
+│   ├── admin.js     # Admin access control
+│   └── rateLimit.js # Rate limiting
+├── models/          # Database models
+│   ├── User.js
+│   ├── File.js
+│   └── Invite.js
+├── routes/          # Route definitions
+│   ├── auth.js
+│   ├── admin.js
+│   └── files.js
+├── public/          # Static files
+│   ├── css/        # CSS styles
+│   ├── js/         # Client-side JavaScript
+│   └── images/     # Static images
+├── uploads/         # User uploaded files
+└── views/           # EJS templates
+    ├── auth/       # Authentication views
+    ├── admin/      # Admin panel views
+    └── files/      # File management views
 ```
 
-## Example .env
+## Environment Configuration
 
-Create a `.env` file in the project root:
+Create a `.env` file in the project root with the following variables:
 
-```
+```env
+# Server Configuration
+NODE_ENV=development
 PORT=3000
-JWT_SECRET=supersecretkey
+BASE_URL=http://localhost:3000
+
+# Session & Security
+JWT_SECRET=your_jwt_secret_here
+
+# Database
+DATABASE_URL=sqlite:./data/app.db
+
+# Email Configuration (SMTP)
 SMTP_HOST=smtp.example.com
 SMTP_PORT=587
-SMTP_USER=no-reply@example.com
-SMTP_PASS=smtpPassword
-SMTP_SECURE=false
-UPLOAD_LIMIT=2147483648
-DEFAULT_ADMIN_EMAIL=admin@example.com
-DEFAULT_ADMIN_PASS=yourStrongPassword
-SQLITE_PATH=./data/app.db
+SMTP_SECURE=false  # true for 465, false for other ports
+SMTP_USER=your_email@example.com
+SMTP_PASS=your_email_password
+SMTP_FROM='"WhoIsCekki" <noreply@whoiscekki.cz>'
+
+# File Uploads
+UPLOAD_DIR=./src/uploads
+MAX_FILE_SIZE=2147483648  # 2GB in bytes
+ALLOWED_FILE_TYPES=*/*    # or specify MIME types: image/*,application/pdf,...
+
+# Security
+RATE_LIMIT_WINDOW_MS=900000  # 15 minutes
+RATE_LIMIT_MAX_REQUESTS=100
+LOGIN_ATTEMPTS=5
+LOCKOUT_TIME=15  # minutes
+
 ```
 
-- `DEFAULT_ADMIN_EMAIL` and `DEFAULT_ADMIN_PASS` are used to create the first headadmin on first run.
-- `SQLITE_PATH` is optional (defaults to `./data/app.db`).
+## Installation
 
-## Setup & Usage
+### Prerequisites
+- Node.js (v18 or higher)
+- npm (v9 or higher)
+- SQLite3
 
-1. **Install dependencies:**
-   ```sh
+### Setup Steps
+
+1. **Clone the repository:**
+   ```bash
+   git clone https://github.com/yourusername/whoiscekki.cz.git
+   cd whoiscekki.cz
+   ```
+
+2. **Install dependencies:**
+   ```bash
    npm install
    ```
-2. **Create your `.env` file** (see above).
-3. **Run the server:**
-   ```sh
-   node src/server.js
+
+3. **Set up environment variables:**
+   - Copy `.env.example` to `.env`
+   - Update the values in `.env` with your configuration
+
+4. **Initialize the database:**
+   ```bash
+   node src/utils/initDb.js
    ```
-4. **Visit** [http://localhost:3000](http://localhost:3000)
+   This will create the necessary tables and the first admin user if it doesn't exist.
 
-- On first run, a headadmin account is created using the credentials from `.env`.
-- Use the admin panel to manage users, invites, and files.
+5. **Start the application:**
+   ```bash
+   npm start
+   ```
+   The application will be available at `http://localhost:3000`
 
-## SMTP Setup
+6. **Access the admin panel:**
+   - Go to `/admin`
+   - Log in with the default admin credentials from your `.env` file
+   - Change the default password immediately
 
-- Use any SMTP provider (Mailgun, Gmail SMTP, custom)
-- Make sure SMTP credentials in `.env` are correct
-- Used for account activation, password reset, invites, notifications
+## Development
 
-## Security
+### Available Scripts
 
-- Passwords are hashed (bcrypt)
-- 2FA (TOTP) optional per user
-- Rate limiting and account lockout after failed logins
-- Email verification required
-- HTTPS recommended for production
-- Sensitive files and folders are ignored via `.gitignore`
+- `npm start` - Start the application in production mode
+- `npm run dev` - Start in development mode with nodemon
+- `npm run build:css` - Build CSS from source files
+- `npm test` - Run tests (to be implemented)
+
+### File Upload Configuration
+
+- Files are stored in the `src/uploads` directory
+- Each user gets their own subdirectory
+- File uploads are limited to 2GB by default (configurable in `.env`)
+- All uploaded files are scanned for viruses if ClamAV is installed
+
+## Security Best Practices
+
+1. **Always use HTTPS in production**
+2. Keep dependencies up to date (`npm audit`)
+3. Use strong passwords and enable 2FA for admin accounts
+4. Regularly backup your database
+5. Monitor server logs for suspicious activity
+6. Keep your server's operating system updated
+7. Use a reverse proxy (Nginx/Apache) in production
+8. Set proper file permissions
+
+## Troubleshooting
+
+### Email Not Sending
+- Verify SMTP settings in `.env`
+- Check spam folder
+- Test SMTP settings with a simple Node.js script
+
+### File Upload Issues
+- Check `UPLOAD_DIR` permissions
+- Verify `MAX_FILE_SIZE` in `.env`
+- Ensure enough disk space is available
+
+### Database Issues
+- Check if SQLite database file exists and is writable
+- Run database migrations if applicable
+- Check logs for SQL errors
+
+## Contributing
+
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
 
 ## License
 
-MIT
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## Support
+
+For support, please open an issue in the GitHub repository or contact the maintainers.
+
+---
+
+*Last updated: November 2025*
