@@ -139,7 +139,7 @@ LOCKOUT_TIME=15  # minutes
 
 1. **Clone the repository:**
    ```bash
-   git clone https://github.com/yourusername/whoiscekki.cz.git
+   git clone https://github.com/Cekkiq/whoiscekki.cz.git
    cd whoiscekki.cz
    ```
 
